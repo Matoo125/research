@@ -51,8 +51,8 @@ function generateCardHtml(card, memory) {
   const badge = isLearned ? `<span title="Learned" style="margin-left:8px;">🌟</span>` : '';
   const sentenceWithPlaceholder = card.deSentence.replace(card.deWord, '______');
   return `
-    <div class="card" ${bgStyle}>
-        <div style="font-size: 12px; color: #555; text-align: right; margin-bottom: 5px; font-weight: bold;">[${correctCount}/${totalCount}]</div>
+    <div class="card" data-word="${card.deWord}" ${bgStyle}>
+        <div class="score-display" style="font-size: 12px; color: #555; text-align: right; margin-bottom: 5px; font-weight: bold;">[${correctCount}/${totalCount}]</div>
         <div class="sentence">${sentenceWithPlaceholder}</div>
         <div class="word">${card.deWord}${badge}</div>
         <div class="translation" style="font-size:11px">${card.enWord}</div>
@@ -100,18 +100,20 @@ function renderCards(cards) {
       else upcoming.push(card);
     }
 
-    if (learning.length > 0) {
-      html += `<h2 style="text-align: center; margin-top: 30px; color: #333;">Learning</h2>`;
-      html += learning.map(c => generateCardHtml(c, memory)).join('');
-    }
-    if (upcoming.length > 0) {
-      html += `<h2 style="text-align: center; margin-top: 30px; color: #333;">Upcoming</h2>`;
-      html += upcoming.map(c => generateCardHtml(c, memory)).join('');
-    }
-    if (learned.length > 0) {
-      html += `<h2 style="text-align: center; margin-top: 30px; color: #333;">Learned 🌟</h2>`;
-      html += learned.map(c => generateCardHtml(c, memory)).join('');
-    }
+    html += `<div id="section-learning" style="${learning.length === 0 ? 'display:none;' : ''}">`;
+    html += `<h2 style="text-align: center; margin-top: 30px; color: #333;">Learning</h2>`;
+    html += `<div class="section-content">${learning.map(c => generateCardHtml(c, memory)).join('')}</div>`;
+    html += `</div>`;
+
+    html += `<div id="section-upcoming" style="${upcoming.length === 0 ? 'display:none;' : ''}">`;
+    html += `<h2 style="text-align: center; margin-top: 30px; color: #333;">Upcoming</h2>`;
+    html += `<div class="section-content">${upcoming.map(c => generateCardHtml(c, memory)).join('')}</div>`;
+    html += `</div>`;
+
+    html += `<div id="section-learned" style="${learned.length === 0 ? 'display:none;' : ''}">`;
+    html += `<h2 style="text-align: center; margin-top: 30px; color: #333;">Learned 🌟</h2>`;
+    html += `<div class="section-content">${learned.map(c => generateCardHtml(c, memory)).join('')}</div>`;
+    html += `</div>`;
   }
 
   if (window.location.pathname === '/learn') {
@@ -193,29 +195,56 @@ function renderCards(cards) {
       // Save to browser memory
       saveAnswer(correctAnswer, userAnswer, isCorrect);
 
-      if (isCorrect) {
-        inputField.style.backgroundColor = '#d4edda';
+      const memory = JSON.parse(localStorage.getItem('flashcard_memory') || '{}');
+      const history = memory[correctAnswer] || [];
+      const correctCount = history.filter(e => e.correct).length;
+      const totalCount = history.length;
+      
+      let consecutiveCorrect = 0;
+      for (let i = history.length - 1; i >= 0; i--) {
+        if (history[i].correct) consecutiveCorrect++;
+        else break;
+      }
+      
+      let isLearned = false;
+      if (history.length > 0) {
+        if (history[0].correct && history.length === consecutiveCorrect) isLearned = true;
+        else if (consecutiveCorrect >= 3) isLearned = true;
+      }
+
+      // Update targeted DOM elements without full re-render
+      const cardEl = button.closest('.card');
+      if (cardEl) {
+        const scoreDisplay = cardEl.querySelector('.score-display');
+        if (scoreDisplay) scoreDisplay.textContent = `[${correctCount}/${totalCount}]`;
         
-        // Dynamically show the badge immediately if they just earned it
-        const memory = JSON.parse(localStorage.getItem('flashcard_memory') || '{}');
-        const history = memory[correctAnswer] || [];
-        let consecutiveCorrect = 0;
-        for (let i = history.length - 1; i >= 0; i--) {
-          if (history[i].correct) consecutiveCorrect++;
-          else break;
-        }
-        let isLearned = false;
-        if (history.length > 0) {
-          if (history[0].correct && history.length === consecutiveCorrect) isLearned = true;
-          else if (consecutiveCorrect >= 3) isLearned = true;
-        }
+        const greenOpacity = Math.min(correctCount * 0.15, 0.7);
+        if (correctCount > 0) cardEl.style.backgroundColor = `rgba(144, 238, 144, ${greenOpacity})`;
+        
         if (isLearned) {
-          const wordDiv = button.parentElement.querySelector('.word');
+          const wordDiv = cardEl.querySelector('.word');
           if (wordDiv && !wordDiv.innerHTML.includes('🌟')) {
              wordDiv.innerHTML += '<span title="Learned" style="margin-left:8px;">🌟</span>';
           }
         }
-        
+
+        // Recategorize if on overview page
+        if (window.location.pathname !== '/learn') {
+           let targetSectionId = isLearned ? 'section-learned' : (history.length > 0 ? 'section-learning' : 'section-upcoming');
+           const targetSection = document.getElementById(targetSectionId);
+           if (targetSection) {
+             targetSection.style.display = 'block';
+             const contentDiv = targetSection.querySelector('.section-content');
+             if (contentDiv && cardEl.parentElement !== contentDiv) {
+               // Add a tiny delay so user sees feedback before it jumps
+               setTimeout(() => { contentDiv.appendChild(cardEl); }, 500);
+             }
+           }
+        }
+      }
+
+      if (isCorrect) {
+        inputField.style.backgroundColor = '#d4edda';
         if (window.location.pathname === '/learn') {
             setTimeout(() => {
                 sortForLearnQueue();
