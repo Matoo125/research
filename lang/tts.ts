@@ -1,5 +1,7 @@
 import fs from 'fs';
 import * as googleTTS from 'google-tts-api';
+// @ts-ignore
+import { parseCSV } from './utils.js';
 
 /**
  * 1. The core interface that all TTS providers must follow.
@@ -78,21 +80,46 @@ export class TTSService {
 }
 
 // ==========================================
-// Example Usage
+// Main Script
 // ==========================================
 async function main() {
-  // Read text and language from command line arguments
-  const text = process.argv[2] || "Hello world! This is a test of our new TypeScript architecture.";
-  const lang = process.argv[3] || "en";
+  const audioDir = './audio';
+  if (!fs.existsSync(audioDir)) {
+    fs.mkdirSync(audioDir);
+  }
 
-  // 1. Initialize the free provider with configured language
-  const freeProvider = new GoogleFreeTTSProvider(lang);
-  
-  // 2. Initialize the service with our chosen provider
+  const csvText = fs.readFileSync('data.csv', 'utf-8');
+  // @ts-ignore
+  const data = parseCSV(csvText);
+
+  const freeProvider = new GoogleFreeTTSProvider('de');
   const ttsService = new TTSService(freeProvider);
 
-  // 3. Generate the file
-  await ttsService.saveToFile(text, "./output.mp3");
+  for (const row of data) {
+    const deWord = row.deWord.trim();
+    const deSentence = row.deSentence.trim();
+
+    // Create a safe filename (avoid slashes etc.)
+    const safeFilename = deWord.replace(/[\/\\?%*:|"<>]/g, '-').toLowerCase();
+    const wordPath = `${audioDir}/${safeFilename}.mp3`;
+    const sentencePath = `${audioDir}/${safeFilename}-sentence.mp3`;
+
+    if (!fs.existsSync(wordPath)) {
+      console.log(`Generating: ${wordPath}`);
+      await ttsService.saveToFile(deWord, wordPath);
+      await new Promise(r => setTimeout(r, 1000));
+    } else {
+      console.log(`Skipping: ${wordPath} (already exists)`);
+    }
+
+    if (!fs.existsSync(sentencePath)) {
+      console.log(`Generating: ${sentencePath}`);
+      await ttsService.saveToFile(deSentence, sentencePath);
+      await new Promise(r => setTimeout(r, 1000));
+    } else {
+      console.log(`Skipping: ${sentencePath} (already exists)`);
+    }
+  }
 }
 
 // Execute the test

@@ -1,31 +1,4 @@
-function parseCSV(text) {
-  const result = [];
-  const lines = text.trim().split('\n');
-  for (let i = 1; i < lines.length; i++) { // Skip header
-    let row = [];
-    let cur = '';
-    let inQuotes = false;
-    for (let char of lines[i]) {
-      if (char === '"') inQuotes = !inQuotes;
-      else if (char === ',' && !inQuotes) {
-        row.push(cur.trim());
-        cur = '';
-      } else {
-        cur += char;
-      }
-    }
-    row.push(cur.trim());
-    if (row.length >= 4) {
-      result.push({
-        deWord: row[0],
-        deSentence: row[1],
-        enWord: row[2],
-        enSentence: row[3]
-      });
-    }
-  }
-  return result;
-}
+import { parseCSV } from './utils.js';
 
 // Memory helper to save answers to localStorage
 function saveAnswer(word, inputString, isCorrect) {
@@ -78,7 +51,9 @@ function renderCards(cards) {
           <input type="text" class='answer'/>
           <button class='submitButton' data-answer="${card.deWord}">Submit</button>
           <button class='help' data-german="${card.deWord}" data-word="${card.enWord}" data-sentence="${card.enSentence}">Help</button>
-          <button>Report</button>
+          <button class="playAudio" data-audio="${card.deWord.replace(/[\/\\?%*:|"<>]/g, '-').toLowerCase()}">🔊 Word</button>
+          <button class="playAudio" data-audio="${card.deWord.replace(/[\/\\?%*:|"<>]/g, '-').toLowerCase()}-sentence">🔊 Sentence</button>
+          <button class="reportButton">Report</button>
       </div>
     `;
   }
@@ -100,6 +75,21 @@ function renderCards(cards) {
     if (prevBtn) prevBtn.onclick = () => { currentLearnIndex--; renderCurrentView(); };
     if (nextBtn) nextBtn.onclick = () => { currentLearnIndex++; renderCurrentView(); };
   }
+
+  // Attach Audio Button Listeners
+  document.querySelectorAll('#content button.playAudio').forEach(button => {
+    button.onclick = function () {
+      const audioName = this.getAttribute('data-audio');
+      new Audio(`audio/${audioName}.mp3`).play();
+    };
+  });
+
+  // Attach Report Button Listeners
+  document.querySelectorAll('#content button.reportButton').forEach(button => {
+    button.onclick = function () {
+      alert("please email to vrzala.matej@gmail.com with any feedback.");
+    };
+  });
 
   // Attach Help Button Listeners
   document.querySelectorAll('#content button.help').forEach(button => {
