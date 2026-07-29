@@ -1,0 +1,42 @@
+write a js function that takes input text, and outputs mp3.
+
+local Claude Code with scraping to solve hireme at low cost.
+
+
+1.
+remote bookmark manager API CRUD service with JWT authentication. And client that works locally and remotely.
+- the API needs to support adding new links individually and in bulk.
+
+
+2.
+for following job boards: profesia, 80k, |  EA opportunities, probably good.
+look at jobs added after TIMESTAMP
+and decide if they should be added to Hireme.
+
+look at following page and go back until you find records created before TIMESTAMP
+after you record all links to jobs, read job description one by one and decide whether it should be added to our database
+if yes, add it there.
+
+application uses PSQL
+
+Any other job where I could be relevant?
+
+
+3. language learning application
+- script that generates TTS
+- dictionary
+- example sentences
+- stories
+- grammar
+
+
+Word
+---
+id
+language_code
+?lemma
+normalized
+pronounciation
+etymology
+usage_notes
+definition
