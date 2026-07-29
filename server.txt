@@ -1,0 +1,36 @@
+Good, single small VPS running Caddy with auto-TLS, serving a few static sites (altfresh, lang.altfresh.sk, plus default html). Here's the 101 setup for keeping this reliable without over-engineering it, given the scale.
+
+1. Version control + deploy discipline
+- Your dist/ is build output — never hand-edit it. Only ever deploy from deploy-lang.sh, which builds from source.
+- Commit source to git and push to a remote (GitHub/GitLab) you don't fully control from this box — a VPS disk failure shouldn't also be your only copy of the code.
+- Add a .gitignore for dist/, node_modules/, bun.lock build artifacts if not already tracked cleanly.
+
+2. Backups
+- The VPS itself: check if your provider (OVH, per hostname) offers automated snapshots — enable them, weekly is plenty for a static site.
+- /etc/caddy/Caddyfile: back it up (it's config-as-code, put it in a git repo too — even a private dotfiles repo).
+- You already have .bak files accumulating in /etc/caddy/ from reloads — that's manual cruft, not a real backup strategy; clean those up periodically.
+
+3. Process supervision (mostly done)
+- Caddy already runs as a systemd service with enabled — it restarts on boot and (by default) on crash. Nothing to add here for a static site.
+
+4. TLS/cert renewal (already automatic)
+- Caddy auto-renews Let's Encrypt certs — confirmed in your logs. No cron job needed. Just don't block outbound port 80/443 in a firewall change later.
+
+5. Monitoring — bare minimum
+- Uptime check: a free service (UptimeRobot, Better Uptime, healthchecks.io) pinging https://lang.altfresh.sk every few minutes, alerting you by email if it goes down. This is the single highest-value thing you're currently missing.
+- Disk space: you're at 13% now, fine, but set up a simple alert (or a weekly df -h cron mailing you) so a runaway log file doesn't silently fill the disk.
+
+6. Logs
+- Caddy logs to systemd journal by default (journalctl -u caddy). Set a journald retention cap (SystemMaxUse= in /etc/systemd/journald.conf) so logs don't grow unbounded on a small VPS.
+
+7. Security basics
+- Auto security updates: enable unattended-upgrades (Ubuntu) so OS/package CVEs get patched without you babysitting it.
+- Firewall: confirm ufw (or equivalent) only allows 22/80/443.
+- SSH: key-only auth, no password login, if not already the case.
+
+8. Deploy safety net
+- Your deploy-lang.sh uses rsync --delete — that's correct for "replace content," but a bad build could push broken output live with no rollback. For a project this size, the low-effort fix is: keep the last known-good dist/ as dist.bak before each deploy, so you can rsync it back in seconds if a deploy breaks the site.
+
+For a single static site on one VPS, that's the realistic 101 list — you don't need Docker, CI/CD pipelines, or multi-server redundancy at this scale; that would be over-engineering. The two things I'd actually do this week: push source to a git remote and set up one uptime monitor. Everything else is nice-to-have.
+
+Want me to implement the git remote push, the deploy rollback (dist.bak), or the journald log cap now?
