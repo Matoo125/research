@@ -83,12 +83,12 @@ export class TTSService {
 // Main Script
 // ==========================================
 async function main() {
-  const audioDir = './audio';
+  const audioDir = './public/audio';
   if (!fs.existsSync(audioDir)) {
-    fs.mkdirSync(audioDir);
+    fs.mkdirSync(audioDir, { recursive: true });
   }
 
-  const csvText = fs.readFileSync('data.csv', 'utf-8');
+  const csvText = fs.readFileSync('./public/data.csv', 'utf-8');
   // @ts-ignore
   const data = parseCSV(csvText);
 
