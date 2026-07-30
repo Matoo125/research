@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookmark Manager CLI Web View</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="terminal-container">
+        <!-- Auth View -->
+        <main id="auth-view" class="view active">
+            <div class="content">
+                <pre>
+ ____              _                         _        
+|  _ \            | |                       | |       
+| |_) | ___   ___ | | ___ __ ___   __ _ _ __| | _____ 
+|  _ < / _ \ / _ \| |/ / '_ \` _ \ / _\` | '__| |/ / __|
+| |_) | (_) | (_) |   <| | | | | | (_| | |  |   <\__ \
+|____/ \___/ \___/|_|\_\_| |_| |_|\__,_|_|  |_|\_\___/
+                                                      
+                </pre>
+                <p>Login or Register</p>
+                <form id="auth-form">
+                    <div class="input-group">
+                        <label for="username">Username:</label>
+                        <input type="text" id="username" required autocomplete="off" spellcheck="false" autofocus>
+                    </div>
+                    <div class="input-group">
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" required>
+                    </div>
+                    <div class="action-buttons">
+                        <button type="submit" id="login-btn" class="btn">[ Login ]</button>
+                        <button type="button" id="register-btn" class="btn">[ Register ]</button>
+                    </div>
+                    <div id="auth-error" class="error-msg hidden"></div>
+                </form>
+            </div>
+        </main>
+
+        <!-- Main App View -->
+        <main id="app-view" class="view hidden">
+            <header class="app-header">
+                <div>User: <span id="user-display">root</span></div>
+                <button id="logout-btn" class="btn">[ Logout ]</button>
+            </header>
+
+            <div class="dashboard">
+                <section class="add-bookmark-section">
+                    <form id="add-form" class="content">
+                        <div>--- Add Bookmark ---</div>
+                        <div class="input-group">
+                            <label for="url">URL:</label>
+                            <input type="url" id="url" required placeholder="https://..." autocomplete="off">
+                        </div>
+                        <div class="input-group">
+                            <label for="title">Title (opt):</label>
+                            <input type="text" id="title" autocomplete="off">
+                        </div>
+                        <button type="submit" class="btn">[ Add ]</button>
+                    </form>
+                </section>
+
+                <section class="list-section">
+                    <div>--- Bookmarks ---</div>
+                    <div class="list-container" id="bookmarks-list">
+                        <!-- Bookmarks will be injected here -->
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

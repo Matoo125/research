@@ -1,3 +1,5 @@
 node_modules/
 *.mp3
 *.swp
+*.db
+.env

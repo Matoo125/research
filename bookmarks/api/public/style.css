@@ -1,0 +1,130 @@
+body {
+    background-color: #000;
+    color: #0f0;
+    font-family: "Courier New", Courier, monospace;
+    margin: 0;
+    padding: 20px;
+    line-height: 1.5;
+}
+
+#terminal-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.view {
+    display: none;
+}
+
+.view.active {
+    display: block;
+}
+
+.hidden {
+    display: none !important;
+}
+
+pre {
+    color: #0f0;
+    margin-bottom: 20px;
+}
+
+.input-group {
+    margin-bottom: 10px;
+}
+
+label {
+    display: inline-block;
+    width: 100px;
+}
+
+input {
+    background-color: #000;
+    color: #0f0;
+    border: 1px solid #0f0;
+    font-family: "Courier New", Courier, monospace;
+    padding: 2px 5px;
+    outline: none;
+    width: 300px;
+}
+
+input:focus {
+    background-color: #111;
+}
+
+.action-buttons {
+    margin-top: 15px;
+}
+
+.btn {
+    background-color: #000;
+    color: #0f0;
+    border: none;
+    font-family: "Courier New", Courier, monospace;
+    cursor: pointer;
+    padding: 0;
+    margin-right: 15px;
+}
+
+.btn:hover {
+    color: #fff;
+}
+
+.error-msg {
+    color: #f00;
+    margin-top: 10px;
+}
+
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px dashed #0f0;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.list-section {
+    border-top: 1px dashed #0f0;
+    padding-top: 10px;
+}
+
+.list-container {
+    margin-top: 10px;
+}
+
+.bookmark-item {
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.bm-info {
+    flex-grow: 1;
+}
+
+.bm-url {
+    color: #0f0;
+    text-decoration: none;
+}
+
+.bm-url:hover {
+    text-decoration: underline;
+}
+
+.delete-btn {
+    background-color: #000;
+    color: #f00;
+    border: none;
+    font-family: "Courier New", Courier, monospace;
+    cursor: pointer;
+}
+
+.delete-btn:hover {
+    color: #fff;
+}
