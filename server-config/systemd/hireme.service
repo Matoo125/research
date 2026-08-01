@@ -1,0 +1,15 @@
+[Unit]
+Description=Hireme job board (Bun)
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/research/hireme/web
+ExecStart=/home/ubuntu/.bun/bin/bun run server.ts
+Environment=PORT=4020
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

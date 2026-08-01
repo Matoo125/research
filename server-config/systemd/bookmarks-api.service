@@ -1,0 +1,15 @@
+[Unit]
+Description=Bookmarks API (Express, served via Bun)
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/research/bookmarks/api
+ExecStart=/home/ubuntu/.bun/bin/bun server.js
+Restart=on-failure
+RestartSec=2
+EnvironmentFile=/home/ubuntu/research/bookmarks/api/.env
+
+[Install]
+WantedBy=multi-user.target
