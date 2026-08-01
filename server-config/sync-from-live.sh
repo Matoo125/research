@@ -10,7 +10,9 @@ for f in /etc/systemd/system/hireme.service \
          /etc/systemd/system/hireme-scrape.timer \
          /etc/systemd/system/bookmarks-api.service \
          /etc/systemd/system/debsums-check.service \
-         /etc/systemd/system/debsums-check.timer; do
+         /etc/systemd/system/debsums-check.timer \
+         /etc/systemd/system/bookmarks-backup.service \
+         /etc/systemd/system/bookmarks-backup.timer; do
   cp "$f" "$DIR/systemd/$(basename "$f")"
 done
 
