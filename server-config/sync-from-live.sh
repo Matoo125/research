@@ -4,6 +4,7 @@ set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 cp /etc/caddy/Caddyfile "$DIR/Caddyfile"
+cp /etc/netdata/netdata.conf "$DIR/netdata.conf"
 for f in /etc/systemd/system/hireme.service \
          /etc/systemd/system/hireme-scrape.service \
          /etc/systemd/system/hireme-scrape.timer \
