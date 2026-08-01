@@ -68,8 +68,17 @@ You can execute the CLI by running `./index.js` directly from the `client/` fold
 # Add a single bookmark
 ./index.js add "https://github.com" "GitHub" "Code hosting"
 
+# Add a bookmark with tags (comma-separated)
+./index.js add "https://github.com" "GitHub" "Code hosting" "dev,git"
+
 # List all your bookmarks
 ./index.js list
+
+# List only bookmarks tagged "dev"
+./index.js list --tag dev
+
+# List all tags with usage counts
+./index.js tags
 
 # Delete a bookmark by its ID
 ./index.js delete 1
@@ -78,4 +87,22 @@ You can execute the CLI by running `./index.js` directly from the `client/` fold
 ./index.js add-bulk path/to/bookmarks.json
 ```
 
-*(Tip: For bulk additions, the JSON file should contain an array of objects looking like `[{"url":"...", "title":"...", "description":"..."}]`)*
+*(Tip: For bulk additions, the JSON file should contain an array of objects looking like `[{"url":"...", "title":"...", "description":"...", "tags":["dev","git"]}]`)*
+
+---
+
+## 🏷️ Tags
+
+Bookmarks can have any number of tags. Tags are per-user, case-insensitive
+("JS" and "js" collapse to one tag), and created automatically the first
+time you use them - no separate "create tag" step needed.
+
+- **Web:** add comma-separated tags in the "Tags" field when adding a
+  bookmark. Click any tag (on a bookmark or in the filter bar above the
+  list) to filter the list down to that tag; click it again to clear.
+- **CLI:** pass a comma-separated tag list as the 4th argument to `add`,
+  filter `list` with `--tag <name>`, or run `tags` to see every tag
+  you've used along with how many bookmarks carry it.
+- **API:** `GET /bookmarks?tag=<name>` filters, `GET /tags` lists all
+  tags with counts, and `POST /bookmarks` accepts a `tags: string[]`
+  field (on each object, for bulk inserts too).

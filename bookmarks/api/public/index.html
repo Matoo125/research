@@ -58,12 +58,19 @@
                             <label for="title">Title (opt):</label>
                             <input type="text" id="title" autocomplete="off">
                         </div>
+                        <div class="input-group">
+                            <label for="tags">Tags (opt):</label>
+                            <input type="text" id="tags" placeholder="dev, reading" autocomplete="off">
+                        </div>
                         <button type="submit" class="btn">[ Add ]</button>
                     </form>
                 </section>
 
                 <section class="list-section">
                     <div>--- Bookmarks ---</div>
+                    <div class="tag-filter-bar" id="tag-filter-bar">
+                        <!-- Tag filter chips will be injected here -->
+                    </div>
                     <div class="list-container" id="bookmarks-list">
                         <!-- Bookmarks will be injected here -->
                     </div>

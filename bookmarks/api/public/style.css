@@ -128,3 +128,33 @@ input:focus {
 .delete-btn:hover {
     color: #fff;
 }
+
+.tag-filter-bar {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.bm-tags {
+    display: inline;
+}
+
+.tag-chip {
+    background-color: #000;
+    color: #0a0;
+    border: none;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.9em;
+    cursor: pointer;
+    padding: 0;
+}
+
+.tag-chip:hover {
+    color: #fff;
+}
+
+.tag-chip.active {
+    color: #fff;
+    text-decoration: underline;
+}

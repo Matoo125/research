@@ -68,12 +68,13 @@ program
   });
 
 program
-  .command('add <url> [title] [description]')
-  .description('Add a new bookmark')
-  .action(async (url, title, description) => {
+  .command('add <url> [title] [description] [tags]')
+  .description('Add a new bookmark (tags: comma-separated, e.g. "dev,reading")')
+  .action(async (url, title, description, tags) => {
     try {
       const api = getApi();
-      const response = await api.post('/bookmarks', { url, title, description });
+      const tagList = tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+      const response = await api.post('/bookmarks', { url, title, description, tags: tagList });
       console.log('Bookmark added!', response.data);
     } catch (error) {
       console.error('Error adding bookmark:', error.response?.data?.error || error.message);
@@ -99,20 +100,41 @@ program
 program
   .command('list')
   .description('List all bookmarks')
-  .action(async () => {
+  .option('-t, --tag <name>', 'filter by tag')
+  .action(async (options) => {
     try {
       const api = getApi();
-      const response = await api.get('/bookmarks');
+      const response = await api.get('/bookmarks', { params: { tag: options.tag } });
       const bookmarks = response.data;
       if (bookmarks.length === 0) {
         console.log('No bookmarks found.');
       } else {
         bookmarks.forEach(bm => {
-          console.log(`[${bm.id}] ${bm.url} ${bm.title ? '- ' + bm.title : ''}`);
+          const label = bm.title ? bm.title : bm.url;
+          const tags = bm.tags && bm.tags.length ? ` (${bm.tags.join(', ')})` : '';
+          console.log(`[${bm.id}] ${label}${tags}`);
         });
       }
     } catch (error) {
       console.error('Error fetching bookmarks:', error.response?.data?.error || error.message);
+    }
+  });
+
+program
+  .command('tags')
+  .description('List all tags with usage counts')
+  .action(async () => {
+    try {
+      const api = getApi();
+      const response = await api.get('/tags');
+      const tags = response.data;
+      if (tags.length === 0) {
+        console.log('No tags found.');
+      } else {
+        tags.forEach(t => console.log(`${t.name} (${t.count})`));
+      }
+    } catch (error) {
+      console.error('Error fetching tags:', error.response?.data?.error || error.message);
     }
   });
 

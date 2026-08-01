@@ -14,17 +14,22 @@ const logoutBtn = document.getElementById('logout-btn');
 const addForm = document.getElementById('add-form');
 const urlInput = document.getElementById('url');
 const titleInput = document.getElementById('title');
+const tagsInput = document.getElementById('tags');
 const bookmarksList = document.getElementById('bookmarks-list');
+const tagFilterBar = document.getElementById('tag-filter-bar');
 
 // State
 let token = localStorage.getItem('nexus_token');
 let currentUser = localStorage.getItem('nexus_user');
+let activeTagFilter = null;
 
 // Init
 function init() {
     if (token) {
         showApp();
+        activeTagFilter = null;
         fetchBookmarks();
+        fetchTags();
     } else {
         showAuth();
     }
@@ -129,23 +134,42 @@ logoutBtn.addEventListener('click', handleLogout);
 // Bookmark Actions
 async function fetchBookmarks() {
     try {
-        const bookmarks = await apiCall('/bookmarks');
+        const query = activeTagFilter ? `?tag=${encodeURIComponent(activeTagFilter)}` : '';
+        const bookmarks = await apiCall(`/bookmarks${query}`);
         renderBookmarks(bookmarks);
     } catch (err) {
         console.error(err);
     }
 }
 
+async function fetchTags() {
+    try {
+        const tags = await apiCall('/tags');
+        renderTagFilterBar(tags);
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function setTagFilter(name) {
+    activeTagFilter = activeTagFilter === name ? null : name;
+    fetchBookmarks();
+    fetchTags();
+}
+
 addForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const url = urlInput.value;
     const title = titleInput.value;
+    const tags = tagsInput.value.split(',').map(t => t.trim()).filter(Boolean);
 
     try {
-        await apiCall('/bookmarks', 'POST', { url, title });
+        await apiCall('/bookmarks', 'POST', { url, title, tags });
         urlInput.value = '';
         titleInput.value = '';
+        tagsInput.value = '';
         fetchBookmarks();
+        fetchTags();
     } catch (err) {
         alert(err.message);
     }
@@ -155,31 +179,77 @@ async function deleteBookmark(id) {
     try {
         await apiCall(`/bookmarks/${id}`, 'DELETE');
         fetchBookmarks();
+        fetchTags();
     } catch (err) {
         alert(err.message);
     }
 }
 
+function renderTagFilterBar(tags) {
+    tagFilterBar.innerHTML = '';
+    if (tags.length === 0) return;
+
+    tags.forEach(t => {
+        const chip = document.createElement('button');
+        chip.className = 'tag-chip' + (activeTagFilter === t.name ? ' active' : '');
+        chip.textContent = `[${t.name} (${t.count})]`;
+        chip.title = activeTagFilter === t.name ? 'Click to clear filter' : `Filter by "${t.name}"`;
+        chip.onclick = () => setTagFilter(t.name);
+        tagFilterBar.appendChild(chip);
+    });
+}
+
 function renderBookmarks(bookmarks) {
     bookmarksList.innerHTML = '';
-    
+
     if (bookmarks.length === 0) {
         bookmarksList.innerHTML = '<div>Empty</div>';
         return;
     }
 
     // Sort by id descending
-    bookmarks.sort((a, b) => b.id - a.id).forEach((bm, index) => {
+    bookmarks.sort((a, b) => b.id - a.id).forEach((bm) => {
         const item = document.createElement('div');
         item.className = 'bookmark-item';
-        item.innerHTML = `
-            <div class="bm-info">
-                [${bm.id}] <a href="${bm.url}" target="_blank" rel="noopener noreferrer" class="bm-url">${bm.url}</a> ${bm.title ? '- ' + bm.title : ''}
-            </div>
-            <div class="bm-actions">
-                <button class="delete-btn" title="Delete record" onclick="deleteBookmark(${bm.id})">[x]</button>
-            </div>
-        `;
+
+        const info = document.createElement('div');
+        info.className = 'bm-info';
+        info.appendChild(document.createTextNode(`[${bm.id}] `));
+
+        const link = document.createElement('a');
+        link.href = bm.url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.className = 'bm-url';
+        link.textContent = bm.title ? bm.title : bm.url;
+        info.appendChild(link);
+
+        const tags = bm.tags || [];
+        if (tags.length) {
+            const tagsSpan = document.createElement('span');
+            tagsSpan.className = 'bm-tags';
+            tags.forEach(t => {
+                tagsSpan.appendChild(document.createTextNode(' '));
+                const chip = document.createElement('button');
+                chip.className = 'tag-chip';
+                chip.textContent = `[${t}]`;
+                chip.onclick = () => setTagFilter(t);
+                tagsSpan.appendChild(chip);
+            });
+            info.appendChild(tagsSpan);
+        }
+
+        const actions = document.createElement('div');
+        actions.className = 'bm-actions';
+        const delBtn = document.createElement('button');
+        delBtn.className = 'delete-btn';
+        delBtn.title = 'Delete record';
+        delBtn.textContent = '[x]';
+        delBtn.onclick = () => deleteBookmark(bm.id);
+        actions.appendChild(delBtn);
+
+        item.appendChild(info);
+        item.appendChild(actions);
         bookmarksList.appendChild(item);
     });
 }
