@@ -1,7 +1,43 @@
 import fs from 'fs';
 import * as googleTTS from 'google-tts-api';
-// @ts-ignore
-import { parseCSV } from './utils.js';
+
+// Duplicated from utils.js (kept separate since that file uses browser ESM syntax
+// that this CommonJS-compiled script can't require()).
+interface FlashcardRow {
+  deWord: string;
+  deSentence: string;
+  enWord: string;
+  enSentence: string;
+}
+
+function parseCSV(text: string): FlashcardRow[] {
+  const result: FlashcardRow[] = [];
+  const lines = text.trim().split('\n');
+  for (let i = 1; i < lines.length; i++) { // Skip header
+    let row: string[] = [];
+    let cur = '';
+    let inQuotes = false;
+    for (const char of lines[i]) {
+      if (char === '"') inQuotes = !inQuotes;
+      else if (char === ',' && !inQuotes) {
+        row.push(cur.trim());
+        cur = '';
+      } else {
+        cur += char;
+      }
+    }
+    row.push(cur.trim());
+    if (row.length >= 4) {
+      result.push({
+        deWord: row[0],
+        deSentence: row[1],
+        enWord: row[2],
+        enSentence: row[3],
+      });
+    }
+  }
+  return result;
+}
 
 /**
  * 1. The core interface that all TTS providers must follow.
@@ -89,7 +125,6 @@ async function main() {
   }
 
   const csvText = fs.readFileSync('./public/data.csv', 'utf-8');
-  // @ts-ignore
   const data = parseCSV(csvText);
 
   const freeProvider = new GoogleFreeTTSProvider('de');

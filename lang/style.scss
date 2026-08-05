@@ -28,15 +28,30 @@
         font-size: 16px;
     }
 
+    &.help-open .word {
+        display: block;
+    }
+
+    .learned-badge {
+        margin-left: 8px;
+    }
+
     .translation {
+        display: none;
         font-size: 12px;
         color: #64748b;
     }
 
     .sentence-translated {
-        display: none;
         font-size: 13px;
         color: #64748b;
+
+        .highlighted-word {
+            text-decoration: underline;
+            text-decoration-color: #94a3b8;
+            font-weight: 600;
+            color: #334155;
+        }
     }
 
     .answer {
@@ -69,6 +84,79 @@
             }
         }
     }
+
+    .help-panel {
+        display: none;
+        padding-top: 10px;
+        border-top: 1px dashed #cbd5e1;
+        font-size: 12px;
+        color: #64748b;
+        border-radius: 4px;
+    }
+
+    &.help-open .help-panel {
+        display: block;
+    }
+
+    .help-panel-title {
+        font-weight: bold;
+        margin-bottom: 4px;
+    }
+
+    .help-history-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .help-history-empty {
+        margin: 0;
+        font-style: italic;
+    }
+
+    .help-history-date {
+        color: #94a3b8;
+        margin-left: 6px;
+    }
+}
+
+@keyframes help-flash {
+    0% {
+        background-color: rgba(251, 191, 36, 0.4);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+.help-panel.flash {
+    animation: help-flash 1.1s ease-out;
+}
+
+.section-title {
+    text-align: center;
+    margin-top: 30px;
+    color: #333;
+}
+
+.learn-nav {
+    display: flex;
+    justify-content: space-between;
+    max-width: 300px;
+    margin: 15px auto 0;
+
+    button {
+        padding: 8px 16px;
+    }
+}
+
+.empty-state {
+    text-align: center;
+    color: #64748b;
+    padding: 40px 0;
 }
 
 // General Reset & Body
@@ -77,6 +165,17 @@ body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background-color: #f8fafc;
     color: #334155;
+}
+
+// Global translation display mode: full sentence (default) vs. word only.
+body.word-only-translation .card {
+    .sentence-translated {
+        display: none;
+    }
+
+    .translation {
+        display: block;
+    }
 }
 
 .navbar {
@@ -100,11 +199,18 @@ body {
         }
     }
 
-    .auto-read-toggle {
+    .nav-settings {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px;
+        margin-left: auto;
+    }
+
+    .setting-toggle {
         display: flex;
         align-items: center;
         gap: 6px;
-        margin-left: auto;
         padding: 4px 12px;
         color: #475569;
         font-size: 13px;

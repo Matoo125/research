@@ -32,8 +32,5 @@ To add a new provider (like OpenAI or AWS):
 1. Create a class that implements the `TTSProvider` interface.
 2. In `tts.ts`, instantiate your new class and pass it into the `TTSService`.
 
-## Technical Debt
-### Frontend Architecture (Vanilla JS DOM Manipulation)
-The application currently uses vanilla JavaScript to render the UI by dynamically constructing HTML strings and modifying `innerHTML`, or by physically manipulating DOM nodes (`appendChild`, updating text nodes). 
-- **Issue**: This "throwaway DOM" and targeted mutation approach is brittle and scales poorly as application state becomes more complex. For instance, correctly moving flashcards between "Learning" and "Learned" sections on the Overview page requires highly specific, manual DOM traversal and element mutation.
-- **Recommendation**: To satisfy modern engineering standards, the frontend should be migrated to a declarative, component-based UI library (such as React, Preact, Vue, or Svelte). This would allow state-driven rendering (via a Virtual DOM), naturally solving UI categorization, score updates, and preserving user interaction state without manual node manipulation.
+## Frontend Architecture
+The flashcard app (`App.jsx`, `components/`, `lib/`) is built with [Preact](https://preactjs.com/) and rendered by Vite (`@preact/preset-vite`). State (answer memory, current card, settings) lives in `App.jsx` and flows down as props; card categorization on the Overview page and score updates are derived from that state on every render rather than patched into the DOM by hand. Pure logic — spaced-repetition scoring (`lib/srs.js`), text normalization/highlighting (`lib/text.js`), audio playback (`lib/audio.js`), and `localStorage` persistence (`lib/storage.js`) — is factored out of the components so it can be tested independently of rendering.
