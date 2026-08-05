@@ -24,6 +24,47 @@ function normalizeGermanText(text) {
     .replace(/[\u0300-\u036f]/g, ''); // Removes the accent marks
 }
 
+const AUTO_READ_KEY = 'autoReadAudio';
+
+function isAutoReadEnabled() {
+  return localStorage.getItem(AUTO_READ_KEY) === 'true';
+}
+
+function audioSafeName(word) {
+  return word.replace(/[\/\\?%*:|"<>]/g, '-').toLowerCase();
+}
+
+// Returns the Audio element so callers can react to playback finishing (e.g. 'ended').
+function playAudioFile(audioName) {
+  const audio = new Audio(`audio/${audioName}.mp3`);
+  audio.play();
+  return audio;
+}
+
+function playCardAudio(word, isSentence) {
+  const safeName = audioSafeName(word);
+  return playAudioFile(isSentence ? `${safeName}-sentence` : safeName);
+}
+
+// Shared by the Help button and the auto-help-on-incorrect behavior
+function showHelp(germanWord, translation, sentence) {
+  let memoryText = '\n\n--- Answer History ---\n';
+  const memory = JSON.parse(localStorage.getItem('flashcard_memory') || '{}');
+  const history = memory[germanWord];
+
+  if (history && history.length > 0) {
+    history.forEach((entry, idx) => {
+      const date = new Date(entry.timestamp).toLocaleString();
+      const status = entry.correct ? '\u2705 Correct' : '\u274c Incorrect';
+      memoryText += `${idx + 1}. [${date}] Typed: "${entry.input}" -> ${status}\n`;
+    });
+  } else {
+    memoryText += 'No previous answers yet.\n';
+  }
+
+  alert(`Word: ${germanWord}\nSentence: ${sentence}${memoryText}`);
+}
+
 let appData = [];
 let currentLearnIndex = 0;
 
@@ -52,17 +93,19 @@ function generateCardHtml(card, memory) {
   const sentenceWithPlaceholder = card.deSentence.replace(card.deWord, '______');
   return `
     <div class="card" data-word="${card.deWord}" ${bgStyle}>
-        <div class="score-display" style="font-size: 12px; color: #555; text-align: right; margin-bottom: 5px; font-weight: bold;">[${correctCount}/${totalCount}]</div>
+        <div class="score-display">[${correctCount}/${totalCount}]</div>
         <div class="sentence">${sentenceWithPlaceholder}</div>
         <div class="word">${card.deWord}${badge}</div>
-        <div class="translation" style="font-size:11px">${card.enWord}</div>
+        <div class="translation">${card.enWord}</div>
         <div class="sentence-translated">${card.enSentence}</div>
         <input type="text" class='answer'/>
-        <button class='submitButton' data-answer="${card.deWord}">Submit</button>
-        <button class='help' data-german="${card.deWord}" data-word="${card.enWord}" data-sentence="${card.enSentence}">Help</button>
-        <button class="playAudio" data-audio="${card.deWord.replace(/[\/\\?%*:|"<>]/g, '-').toLowerCase()}">🔊 Word</button>
-        <button class="playAudio" data-audio="${card.deWord.replace(/[\/\\?%*:|"<>]/g, '-').toLowerCase()}-sentence">🔊 Sentence</button>
-        <button class="reportButton">Report</button>
+        <div class="card-actions">
+            <button class='submitButton' data-answer="${card.deWord}">Submit</button>
+            <button class='help' data-german="${card.deWord}" data-word="${card.enWord}" data-sentence="${card.enSentence}">Help</button>
+            <button class="playAudio" data-audio="${audioSafeName(card.deWord)}">🔊 Word</button>
+            <button class="playAudio" data-audio="${audioSafeName(card.deWord)}-sentence">🔊 Sentence</button>
+            <button class="reportButton">Report</button>
+        </div>
     </div>
   `;
 }
@@ -128,6 +171,9 @@ function renderCards(cards) {
   document.querySelector('#content').innerHTML = html;
 
   if (window.location.pathname === '/learn') {
+    const answerInput = document.querySelector('#content .answer');
+    if (answerInput) answerInput.focus();
+
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     if (prevBtn) prevBtn.onclick = () => { currentLearnIndex--; renderCurrentView(); };
@@ -137,8 +183,7 @@ function renderCards(cards) {
   // Attach Audio Button Listeners
   document.querySelectorAll('#content button.playAudio').forEach(button => {
     button.onclick = function () {
-      const audioName = this.getAttribute('data-audio');
-      new Audio(`audio/${audioName}.mp3`).play();
+      playAudioFile(this.getAttribute('data-audio'));
     };
   });
 
@@ -152,32 +197,19 @@ function renderCards(cards) {
   // Attach Help Button Listeners
   document.querySelectorAll('#content button.help').forEach(button => {
     button.onclick = function () {
-      const germanWord = this.getAttribute('data-german');
-      const translation = this.getAttribute('data-word');
-      const sentence = this.getAttribute('data-sentence');
-      
-      let memoryText = '\n\n--- Answer History ---\n';
-      const memory = JSON.parse(localStorage.getItem('flashcard_memory') || '{}');
-      const history = memory[germanWord];
-      
-      if (history && history.length > 0) {
-        history.forEach((entry, idx) => {
-          const date = new Date(entry.timestamp).toLocaleString();
-          const status = entry.correct ? '✅ Correct' : '❌ Incorrect';
-          memoryText += `${idx + 1}. [${date}] Typed: "${entry.input}" -> ${status}\n`;
-        });
-      } else {
-        memoryText += 'No previous answers yet.\n';
-      }
-
-      alert(`Word: ${germanWord}\nSentence: ${sentence}${memoryText}`);
+      showHelp(
+        this.getAttribute('data-german'),
+        this.getAttribute('data-word'),
+        this.getAttribute('data-sentence')
+      );
     }
   });
 
   // Attach Submit Button Listeners
   document.querySelectorAll('#content button.submitButton').forEach(button => {
-    const inputField = button.previousElementSibling;
-    
+    const cardEl = button.closest('.card');
+    const inputField = cardEl ? cardEl.querySelector('.answer') : null;
+
     if (inputField) {
       inputField.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
@@ -213,7 +245,6 @@ function renderCards(cards) {
       }
 
       // Update targeted DOM elements without full re-render
-      const cardEl = button.closest('.card');
       if (cardEl) {
         const scoreDisplay = cardEl.querySelector('.score-display');
         if (scoreDisplay) scoreDisplay.textContent = `[${correctCount}/${totalCount}]`;
@@ -245,14 +276,47 @@ function renderCards(cards) {
 
       if (isCorrect) {
         inputField.style.backgroundColor = '#d4edda';
+
         if (window.location.pathname === '/learn') {
-            setTimeout(() => {
-                sortForLearnQueue();
-                renderCurrentView();
-            }, 1000);
+          const advance = () => {
+            sortForLearnQueue();
+            currentLearnIndex++;
+            renderCurrentView();
+          };
+
+          if (isAutoReadEnabled()) {
+            // Keep the card on screen for as long as the sentence is being read,
+            // instead of advancing on a fixed timer.
+            const sentenceAudio = playCardAudio(correctAnswer, true);
+            let advanced = false;
+            const advanceOnce = () => {
+              if (advanced) return;
+              advanced = true;
+              advance();
+            };
+            sentenceAudio.addEventListener('ended', advanceOnce, { once: true });
+            sentenceAudio.addEventListener('error', advanceOnce, { once: true });
+            // Safety net in case playback stalls or is blocked by the browser.
+            setTimeout(advanceOnce, 8000);
+          } else {
+            setTimeout(advance, 1000);
+          }
+        } else if (isAutoReadEnabled()) {
+          playCardAudio(correctAnswer, true);
         }
       } else {
         inputField.style.backgroundColor = '#f8d7da';
+        if (isAutoReadEnabled()) {
+          playCardAudio(correctAnswer, false);
+        }
+        const helpBtn = cardEl ? cardEl.querySelector('.help') : null;
+        if (helpBtn) {
+          showHelp(
+            helpBtn.getAttribute('data-german'),
+            helpBtn.getAttribute('data-word'),
+            helpBtn.getAttribute('data-sentence')
+          );
+        }
       }
     }
   });
@@ -319,12 +383,22 @@ function sortForLearnQueue() {
   });
 }
 
+function setupAutoReadToggle() {
+  const toggle = document.getElementById('autoReadToggle');
+  if (!toggle) return;
+  toggle.checked = isAutoReadEnabled();
+  toggle.addEventListener('change', () => {
+    localStorage.setItem(AUTO_READ_KEY, toggle.checked ? 'true' : 'false');
+  });
+}
+
 async function loadApp() {
   try {
     const response = await fetch('data.csv');
     const csvText = await response.text();
     appData = parseCSV(csvText);
     sortForLearnQueue();
+    setupAutoReadToggle();
 
     // Setup navigation
     document.querySelectorAll('a[data-nav]').forEach(link => {
