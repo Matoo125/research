@@ -27,6 +27,7 @@
 
 lang.altfresh.sk {
 	root * /var/www/lang.altfresh.sk
+	try_files {path} /index.html
 	file_server
 }
 
